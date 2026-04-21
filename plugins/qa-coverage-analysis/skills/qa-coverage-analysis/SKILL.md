@@ -21,12 +21,6 @@ ls tests/integration/karate/src/test/resources/data/templates/common/ 2>/dev/nul
 
 **Step 2 — Load QA testing context:**
 
-Try the project-local file first:
-```bash
-cat .claude/qa-testing-context.md 2>/dev/null
-```
-
-If that file is absent or empty, fetch from the plugin repo:
 ```bash
 curl -s https://raw.githubusercontent.com/Connected2FiberTeam/cb-qa-claude-plugins/main/context/qa-testing-context.md
 ```
