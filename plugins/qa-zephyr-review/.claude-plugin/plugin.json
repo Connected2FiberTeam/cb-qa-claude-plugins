@@ -1,0 +1,7 @@
+{
+  "name": "qa-zephyr-review",
+  "description": "Review Zephyr Scale test cases for completeness, clarity, and platform standards (RP1/RP2/LMX/UAP).",
+  "version": "1.0.0",
+  "author": { "name": "Don Dohr" },
+  "keywords": ["zephyr", "test-case", "review", "qa", "rp2"]
+}

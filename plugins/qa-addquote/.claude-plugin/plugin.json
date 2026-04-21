@@ -1,0 +1,7 @@
+{
+  "name": "qa-addquote",
+  "description": "Add new quote test scenarios to the Karate integration test suite. Auto-detects RP1 vs RP2 repo and adapts accordingly.",
+  "version": "1.0.0",
+  "author": { "name": "Don Dohr" },
+  "keywords": ["karate", "quote", "test", "rp1", "rp2", "integration-test"]
+}

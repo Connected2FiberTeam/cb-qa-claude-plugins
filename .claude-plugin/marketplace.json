@@ -1,0 +1,32 @@
+{
+  "name": "qa-tools",
+  "owner": {
+    "name": "Don Dohr"
+  },
+  "metadata": {
+    "description": "QA automation skills for Connectbase ACE team — Karate test generation, coverage analysis, and Zephyr Scale review. Works across RemotePricing2 (RP2) and RemotePricingAPI (RP1).",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "qa-addquote",
+      "source": "./plugins/qa-addquote",
+      "description": "Add new quote test scenarios to the Karate integration test suite (RP1 and RP2)"
+    },
+    {
+      "name": "qa-apimapadd",
+      "source": "./plugins/qa-apimapadd",
+      "description": "Generate Karate API mapping feature files from PSAM CSV files"
+    },
+    {
+      "name": "qa-coverage-analysis",
+      "source": "./plugins/qa-coverage-analysis",
+      "description": "Analyze Jira ticket test coverage — requirements, code changes, Zephyr test cases, and Karate integration gaps"
+    },
+    {
+      "name": "qa-zephyr-review",
+      "source": "./plugins/qa-zephyr-review",
+      "description": "Review Zephyr Scale test cases for completeness, clarity, and RP2/RP1 standards"
+    }
+  ]
+}

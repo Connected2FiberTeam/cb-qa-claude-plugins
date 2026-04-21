@@ -1,0 +1,7 @@
+{
+  "name": "qa-apimapadd",
+  "description": "Generate Karate API mapping feature files from PSAM CSV files. Handles product mappings, country mappings, and transmission rate lookups across Stage/UAT/Prod.",
+  "version": "1.0.0",
+  "author": { "name": "Don Dohr" },
+  "keywords": ["karate", "mapping", "psam", "feature-file", "rp2"]
+}
