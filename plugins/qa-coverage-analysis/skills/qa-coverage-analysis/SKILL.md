@@ -8,11 +8,34 @@ allowed-tools: Bash(git:*), Bash(python3:*), Bash(curl:*), Bash(grep:*), Read, G
 
 Given a Jira ticket key, produce a complete test coverage analysis covering: what the ticket requires, what code changed, what Zephyr Scale test cases exist, what they cover, and what gaps remain — including Karate integration test coverage.
 
+## Repo Detection and Context Loading
+
+**Run both of these before any user interaction.**
+
+**Step 1 — Detect the repo:**
+```bash
+ls tests/integration/karate/src/test/resources/data/templates/common/ 2>/dev/null
+```
+- `rp2_base_template.json` present → **RP2 mode**
+- `rp1_base_template.json` present → **RP1 mode**
+
+**Step 2 — Load QA testing context:**
+
+Try the project-local file first:
+```bash
+cat .claude/qa-testing-context.md 2>/dev/null
+```
+
+If that file is absent or empty, fetch from the plugin repo:
+```bash
+curl -s https://raw.githubusercontent.com/Connected2FiberTeam/cb-qa-claude-plugins/main/context/qa-testing-context.md
+```
+
+Once loaded, use only the sections relevant to the detected repo mode. Ignore platform-specific sections for the other repo.
+
 ## Input
 
 The ticket key is provided as the argument to this command (e.g. `ACE-2908`). If no argument is provided, ask the user for the ticket key before proceeding.
-
-Before beginning analysis, read `.claude/qa-testing-context.md` for QA domain knowledge including CPQ test architecture, test layer responsibilities, and the Call-To-Test catalog.
 
 ---
 

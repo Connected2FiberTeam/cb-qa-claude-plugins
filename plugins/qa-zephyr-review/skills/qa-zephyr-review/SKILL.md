@@ -6,9 +6,33 @@ allowed-tools: Bash(curl:*), Read, WebFetch, Grep, Glob
 
 # Zephyr Scale Test Case Review
 
-## Overview
+## Repo Detection and Context Loading
 
-Before beginning any review, read `.claude/qa-testing-context.md` for QA domain knowledge including CPQ test architecture, what belongs in Zephyr steps vs. notes, clean step content rules, and the Call-To-Test catalog.
+**Run both of these before Phase 1.**
+
+**Step 1 — Detect the repo:**
+```bash
+ls tests/integration/karate/src/test/resources/data/templates/common/ 2>/dev/null
+```
+- `rp2_base_template.json` present → **RP2 mode**
+- `rp1_base_template.json` present → **RP1 mode**
+- Neither found → apply general platform standards; ask user if needed
+
+**Step 2 — Load QA testing context:**
+
+Try the project-local file first:
+```bash
+cat .claude/qa-testing-context.md 2>/dev/null
+```
+
+If that file is absent or empty, fetch from the plugin repo:
+```bash
+curl -s https://raw.githubusercontent.com/Connected2FiberTeam/cb-qa-claude-plugins/main/context/qa-testing-context.md
+```
+
+Once loaded, use only the sections relevant to the detected repo mode (RP1-Specific or RP2-Specific reference sections, platform-appropriate supplier naming, speed formats, instance IDs). Ignore sections for the other platform.
+
+## Overview
 
 Review Zephyr Scale test cases to ensure they meet quality standards for:
 - Completeness of test information
