@@ -34,7 +34,11 @@ QA automation Claude Code plugins for the Connectbase ACE team. Works across Rem
 ### qa-addquote / qa-apimapadd
 - `mongosh` (`brew install mongosh`) — for RP1/RP2 MongoDB lookups
 - `mysql` 8.4 client (`brew install mysql@8.4`) — for transmission rate and country mapping queries
-- Credentials set in `~/.zshrc` — see CLAUDE.local.md for the full list
+- The following env vars set in `~/.zshrc`:
+  - `MYSQL_USER` — MySQL username
+  - `MYSQL_HOST_STAGE` / `MYSQL_PASSWORD_STAGE` — Stage connection
+  - `MYSQL_HOST_UAT` / `MYSQL_PASSWORD_UAT` — UAT connection
+  - `MYSQL_HOST_PROD` / `MYSQL_PASSWORD_PROD` — Production connection
 
 ### qa-coverage-analysis
 - `ZEPHYR_SCALE_TOKEN` set in `~/.zshrc` — for Zephyr Scale test case lookup
