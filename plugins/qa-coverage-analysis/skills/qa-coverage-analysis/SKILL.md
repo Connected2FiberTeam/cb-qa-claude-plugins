@@ -1,7 +1,7 @@
 ---
 name: qa-coverage-analysis
 description: Analyze Jira ticket test coverage — requirements, code changes, Zephyr Scale test cases, and Karate integration gaps. Works in both RemotePricing2 (RP2) and RemotePricingAPI (RP1). Use with a Jira ticket key e.g. /qa-coverage-analysis ACE-2908
-allowed-tools: Bash(git:*), Bash(python3:*), Bash(curl:*), Bash(grep:*), Read, Grep, Glob, mcp__claude_ai_Atlassian__getJiraIssue, mcp__claude_ai_Atlassian__search
+allowed-tools: Bash(git:*), Bash(python3:*), Bash(curl:*), Bash(grep:*), Read, Grep, Glob, mcp__claude_ai_Atlassian__getJiraIssue, mcp__claude_ai_Atlassian__search, mcp__atlassian__getJiraIssue, mcp__atlassian__search
 ---
 
 # QA Coverage Analysis
@@ -37,7 +37,7 @@ The ticket key is provided as the argument to this command (e.g. `ACE-2908`). If
 
 ### 1.1 Fetch the parent ticket
 
-Use `mcp__claude_ai_Atlassian__getJiraIssue` with `cloudId: connectbase.atlassian.net` and `responseContentFormat: adf`.
+Use the available Atlassian `getJiraIssue` MCP tool (either `mcp__claude_ai_Atlassian__getJiraIssue` from the desktop connector or `mcp__atlassian__getJiraIssue` from the CLI plugin — whichever is registered in this session) with `cloudId: connectbase.atlassian.net` and `responseContentFormat: adf`.
 
 **Important:** Always use `responseContentFormat: adf`. The `markdown` format silently drops Jira custom fields, including `customfield_12092` (acceptance criteria). ADF preserves all fields.
 
@@ -56,7 +56,7 @@ Extract and record:
 
 ### 1.2 Fetch each subtask
 
-For every subtask key found in 1.1, fetch the full ticket using `mcp__claude_ai_Atlassian__getJiraIssue` with `responseContentFormat: adf`.
+For every subtask key found in 1.1, fetch the full ticket using the same Atlassian `getJiraIssue` MCP tool used in 1.1 with `responseContentFormat: adf`.
 
 Extract the same fields as the parent: description, `customfield_12092` (acceptance criteria), comments.
 
