@@ -1,7 +1,7 @@
 {
   "name": "qa-coverage-analysis",
   "description": "Analyze Jira ticket test coverage. Extracts requirements, analyzes code changes, looks up Zephyr Scale test cases, and maps Karate integration test coverage.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": { "name": "Don Dohr" },
   "keywords": ["coverage", "jira", "zephyr", "karate", "qa", "testing"]
 }
