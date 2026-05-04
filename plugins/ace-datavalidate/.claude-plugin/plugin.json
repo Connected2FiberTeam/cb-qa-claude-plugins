@@ -1,0 +1,7 @@
+{
+  "name": "ace-datavalidate",
+  "description": "Validate addresses and quote configurations by running live quote requests across multiple combinations. Batches up to 10 at a time and stops as soon as a valid result is found.",
+  "version": "1.0.0",
+  "author": { "name": "Don Dohr" },
+  "keywords": ["karate", "quote", "validation", "address", "rp2", "rp1", "uap", "integration-test"]
+}

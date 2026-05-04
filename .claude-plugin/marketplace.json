@@ -32,6 +32,11 @@
       "name": "ace-runquote",
       "source": "./plugins/ace-runquote",
       "description": "Run a live one-off quote against any ACE platform provider (RP2, RP1, or UAP) and return the raw response"
+    },
+    {
+      "name": "ace-datavalidate",
+      "source": "./plugins/ace-datavalidate",
+      "description": "Validate addresses and quote configurations by batching live quote requests (max 10 per run) and stopping as soon as a valid result is found"
     }
   ]
 }
