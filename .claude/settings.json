@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git *)",
+      "Bash(open *)",
+      "Bash(python3 *)",
+      "Bash(curl *)",
+      "Bash(echo *)",
+      "Bash(file *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(ls *)",
+      "WebFetch",
+      "mcp__plugin_atlassian_atlassian__getConfluencePage",
+      "mcp__plugin_atlassian_atlassian__getJiraIssue",
+      "mcp__plugin_atlassian_atlassian__search",
+      "mcp__plugin_atlassian_atlassian__fetch",
+      "mcp__claude_ai_Atlassian__getJiraIssue",
+      "mcp__claude_ai_Atlassian__search",
+      "mcp__claude_ai_Atlassian__fetch",
+      "mcp__atlassian__getJiraIssue",
+      "mcp__atlassian__search",
+      "Skill(qa-addquote)"
+    ]
+  }
+}
