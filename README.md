@@ -12,7 +12,7 @@ QA automation Claude Code plugins for the Connectbase ACE team. Works across Rem
 
 | Plugin | Description |
 |--------|-------------|
-| `qa-addquote` | Add new quote test scenarios to the Karate integration test suite — auto-detects RP1 vs RP2 |
+| `qa-addquote` | Add new quote test scenarios to the Karate integration test suite — auto-detects RP2, RP1, or UAP |
 | `qa-apimapadd` | Generate Karate API mapping feature files from PSAM CSV files |
 | `qa-coverage-analysis` | Analyze Jira ticket test coverage — requirements, code changes, Zephyr test cases, and Karate gaps |
 | `qa-zephyr-review` | Review Zephyr Scale test cases for completeness, clarity, and platform standards — supports RP1, RP2, LMX, and UAP |

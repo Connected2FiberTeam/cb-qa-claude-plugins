@@ -1,6 +1,6 @@
 ---
 name: qa-addquote
-description: Add a new quote test scenario to the Karate integration test suite. Works in both RemotePricing2 (RP2) and RemotePricingAPI (RP1). Auto-detects the repo and adapts templates, provider lists, and field options accordingly.
+description: Add a new quote test scenario to the Karate integration test suite. Works in RemotePricing2 (RP2), RemotePricingAPI (RP1), and UAP. Auto-detects the repo and adapts templates, provider lists, and field options accordingly.
 allowed-tools: Read, Grep, Glob, Bash, AskUserQuestion, Edit, Write
 ---
 
@@ -8,12 +8,14 @@ allowed-tools: Read, Grep, Glob, Bash, AskUserQuestion, Edit, Write
 
 ## Repo Detection
 
-**Run this before any user interaction.** Check for the base template file to determine the repo:
+**Run this before any user interaction.** Check for marker files to determine the repo:
 
 ```bash
+ls src/test/resources/helpers/wait_for_uap_result.js 2>/dev/null
 ls tests/integration/karate/src/test/resources/data/templates/common/ 2>/dev/null
 ```
 
+- `wait_for_uap_result.js` present → **UAP mode** — skip to [UAP Mode](#uap-mode) section below
 - `rp2_base_template.json` present → **RP2 mode** (RemotePricing2)
   - Async: POST to Request Builder → poll Response Builder HTTP API (or wait for callback)
   - Supports: LMX adapters, callback mode, polling config fields, `cache`, `quoteMasterId`
@@ -27,7 +29,7 @@ ls tests/integration/karate/src/test/resources/data/templates/common/ 2>/dev/nul
   - Auth header required: `header Authorization = accessToken`
   - Read timeout defaults to 180s (covers RP1's ~120s internal supplier timeout)
 
-If neither file found, ask the user which repo/platform they're working in.
+If no file found, ask the user which repo/platform they're working in.
 
 ---
 
@@ -489,7 +491,7 @@ If "Yes": Execute the appropriate run command and report results.
 
 ---
 
-## Important Notes
+## Important Notes (RP2/RP1)
 
 - Always use the Read tool before editing any files
 - Preserve existing scenarios when adding new ones
@@ -499,3 +501,642 @@ If "Yes": Execute the appropriate run command and report results.
 - The supplier field in Examples should usually be left empty to use the default
 - Products, terms, and accessMediums fields should be left empty when using defaults
 - Generate meaningful scenario names that describe the test (e.g., "New York NY 100M", "London UK No Coverage")
+
+---
+
+## UAP Mode
+
+Feature files live at: `src/test/resources/features/quote/{ProviderFolder}/{Provider}_Quote.feature`
+
+Run commands execute from the **repo root** (not a subdirectory).
+
+### Existing UAP Providers
+
+- `Lumen` → `Lumen/Lumen_Quote.feature` — DIA (IpService); uses address dictionary + `addressKey` column
+- `Windstream` → `Windstream/Windstream_Quote.feature` — Broadband; uses inline address columns
+- `ESUN` → `ESUN/Esun_Quote.feature` — DIA/EAccess/ELine; uses address dictionary + unified `buildRequest` function
+
+---
+
+### UAP Step 1: Product Type
+
+Ask the user using AskUserQuestion:
+
+**Question** (header: "Product Type")
+- Question: "Which UAP product type is this for?"
+- Options:
+  - "DIA / Dedicated Internet (IpService)" — single site, `@type: IpService`
+  - "Ethernet Switched (EAccess)" — single site, `@type: EAccess`
+  - "Ethernet Dedicated P2P (ELine)" — two sites, `@type: ELine`
+  - "Broadband" — single site, `@type: Broadband`
+
+---
+
+### UAP Step 2: Existing or New Provider
+
+Ask using AskUserQuestion:
+
+**Question** (header: "Provider")
+- Question: "Is this for an existing provider?"
+- Options:
+  - "Yes" (description: "Add scenario to an existing provider's feature file")
+  - "No" (description: "Create a new provider feature file")
+
+**If existing provider:** list the providers above, ask which one. Read the existing feature file before proceeding — note the address style (dictionary vs inline), the Scenario Outline column layout, and the `providerFilter` from existing `resultConfig` lines. Skip to UAP Step 4.
+
+**If new provider:** ask for the provider name and proceed through all steps.
+
+---
+
+### UAP Step 3: Provider Filter (new providers only)
+
+The `providerFilter` is the exact solution provider name as it appears in the UAP query service results (e.g., `'Lumen Quote v4'`, `'Windstream Wholesale Broadband Quoting'`, `'ESUN LMP Inquiry'`). It is used in `resultConfig` to wait for that specific provider's result.
+
+Ask using AskUserQuestion:
+
+**Question** (header: "Provider Filter")
+- Question: "What is the exact provider filter string for the query service? (Check existing feature files or UAP solution provider config for the exact name)"
+- Let the user type the exact string.
+
+---
+
+### UAP Step 4: Address(es)
+
+Collect address information. For ELine (P2P), collect both A-side and Z-side.
+
+**Single site (IpService, EAccess, Broadband):**
+
+Ask for:
+- `streetNr` — street number only (e.g., `"50"`)
+- `streetName` — name only, no type (e.g., `"Fremont"`, not `"Fremont St"`)
+- `streetType` — optional (e.g., `"St"`, `"Ave"`, `"Rd"`)
+- `postcode` — postal/ZIP code
+- `stateOrProvince` — 2-letter for US/CA; full region name for international
+- `countryIso3` — 3-letter ISO code (e.g., `USA`, `GBR`, `CHN`)
+- `city`
+- `lat` / `lon` — optional; include if known (Lumen uses these for geocoded lookups)
+- `locality` — optional; used for international addresses (e.g., district name in China)
+
+Generate an address key in SCREAMING_SNAKE_CASE: `{CITY}_{DESCRIPTOR}` (e.g., `SAN_FRANCISCO_FREMONT`, `BEIJING_DIA`). Use a descriptor that distinguishes addresses for the same city.
+
+**ELine (P2P) — two sites:**
+
+Collect the same fields twice, labeled A-side and Z-side. Generate two keys: `siteAKey` and `siteZKey`.
+
+---
+
+### UAP Step 5: Quote Configuration
+
+Ask using AskUserQuestion for each relevant field:
+
+**Question** (header: "Bandwidth")
+- Question: "What bandwidth in Mbps?" (integer, e.g., `100`, `1000`)
+
+**Question** (header: "Term")
+- Question: "What contract term in months?" (e.g., `12`, `24`, `36`)
+
+**For EAccess, ELine, Broadband only:**
+
+**Question** (header: "Access Media")
+- Question: "What access media?"
+- Options: `FIBRE` (default), `COPPER`, `WIRELESS`
+
+**For Broadband only — also ask:**
+
+**Question** (header: "Upload Bandwidth")
+- Question: "What upload bandwidth in Mbps?" (e.g., `4`, `10`, `50` — often asymmetric)
+
+---
+
+### UAP Step 6: Test Type and Assertions
+
+**Question** (header: "Test Type")
+- Question: "What is the expected outcome?"
+- Options:
+  - "success" — expects pricing result returned
+  - "no-coverage" — expects no result within timeout
+
+**Question** (header: "Assertions")
+- Question: "What assertions should be verified? (semicolon-separated, or leave blank for none)"
+- Suggest defaults based on product type:
+  - DIA: `supplierProductId=PROVIDER_DIA; mrc!=0; nrc!=0`
+  - EAccess: `supplierProductId=PROVIDER_ETHERNET_SWITCHED; mrc!=0; nrc!=0`
+  - ELine: `supplierProductId=PROVIDER_ETHERNET_DEDICATED; mrc!=0; nrc!=0`
+  - Broadband: `supplierProductId=PROVIDER_BROADBAND; mrc!=0; nrc!=0`
+- Replace `PROVIDER_*` with the actual supplier product ID if known.
+
+**Supported assertion syntax:**
+
+| Syntax | Meaning |
+|--------|---------|
+| `supplierProductId=LUMEN_DIA` | Exact supplier product ID match |
+| `mrc!=0` | MRC is non-zero |
+| `nrc!=0` | NRC is non-zero |
+| `mrc=87.24` | Exact MRC amount |
+| `nrc=150` | Exact NRC amount |
+| `currencyIso3=USD` | Currency check |
+| `chipset=FTTP` | Chipset value (Broadband) |
+| `accessMedium=FIBRE` | Access medium check |
+
+For `no-coverage` tests, leave assertions blank.
+
+---
+
+### UAP Step 7: Generate / Update the Feature File
+
+#### If adding to an existing provider:
+
+1. Read the feature file
+2. **If the file uses an address dictionary** (has `* def addresses = """` in Background):
+   - Check if the address key already exists; if not, add the new address entry to the `addresses` object
+   - Add a new row to the appropriate Examples table
+3. **If the file uses inline address columns** (Windstream style):
+   - Add a new row to the Examples table with inline address fields
+4. Match the existing column order exactly
+
+#### If creating a new provider:
+
+Create the folder and feature file:
+```
+src/test/resources/features/quote/{ProviderFolder}/{Provider}_Quote.feature
+```
+
+Use the appropriate template below based on the product type(s) needed.
+
+**For a single product type**, use a product-specific template.
+**For multiple product types**, use the unified buildRequest template (ESUN style).
+
+---
+
+### UAP Feature File Templates
+
+#### Single Product — IpService (DIA):
+
+```gherkin
+Feature: {Provider Name} quote integration tests
+  End-to-end tests for {Provider Name} solution provider.
+
+  Background:
+    * url restApiUrl
+    * def queryServiceUrl = queryServiceUrl
+    * def customer = testCustomer
+    * def generateRef = function() { return '{provider-prefix}-' + java.lang.System.currentTimeMillis() + '-' + Math.floor(Math.random() * 10000) }
+    * def addresses =
+      """
+      {
+        "{ADDRESS_KEY}": {
+          "streetNr": "{streetNr}",
+          "streetName": "{streetName}",
+          "streetType": "{streetType}",
+          "postcode": "{postcode}",
+          "stateOrProvince": "{stateOrProvince}",
+          "countryIso3": "{countryIso3}",
+          "city": "{city}"
+        }
+      }
+      """
+
+  # ============================================================================
+  # Single Site - IP Services (DIA)
+  # ============================================================================
+
+  @{provider_tag} @quote @{provider_tag}-dia
+  Scenario Outline: {Provider} DIA - <scenario>
+    * def clientRequestRef = generateRef()
+    * def address = addresses['<addressKey>']
+
+    Given path 'requirement'
+    And request
+      """
+      {
+        "clientRequestReference": "#(clientRequestRef)",
+        "customer": {
+          "customerId": "#(customer.customerId)",
+          "customerName": "#(customer.customerName)"
+        },
+        "requirements": [{
+          "@type": "IpService",
+          "productType": "IP_SERVICES",
+          "clientRequirementReference": "<scenario>",
+          "processingPriority": "MEDIUM",
+          "contractTermMonths": <termMonths>,
+          "site": {
+            "clientSiteReference": "<scenario>-site",
+            "location": {
+              "address": {
+                "@type": "FieldedAddress",
+                "streetNr": "#(address.streetNr)",
+                "streetName": "#(address.streetName)",
+                "streetType": "#(address.streetType)",
+                "postcode": "#(address.postcode)",
+                "stateOrProvince": "#(address.stateOrProvince)",
+                "countryIso3": "#(address.countryIso3)",
+                "city": "#(address.city)"
+              }
+            },
+            "serviceConfiguration": {
+              "accessBandwidth": { "unit": "MBPS", "value": <bandwidth> },
+              "serviceBandwidth": { "unit": "MBPS", "value": <bandwidth> }
+            }
+          }
+        }]
+      }
+      """
+    When method POST
+    Then status 200
+    And match response.systemRequestId == '#notnull'
+    And match response.requirements[0].systemRequirementId == '#notnull'
+
+    * def engagementId = response.requirements[0].systemRequirementId
+    * karate.log('{Provider} DIA engagement ID:', engagementId)
+    * def resultConfig = { engagementId: '#(engagementId)', queryUrl: '#(queryServiceUrl)', timeoutSeconds: '#(resultTimeoutSeconds)', testType: '<testType>', assertions: '<assertions>', providerFilter: '{Provider Filter String}' }
+    * def pollResult = call read('classpath:helpers/wait_for_uap_result.js') resultConfig
+    * karate.log('{Provider} DIA result status:', pollResult.status, 'source:', pollResult.source)
+    * def isSuccessTest = '<testType>' == 'success'
+    * if (isSuccessTest && pollResult.status != 'success') karate.fail('Expected success but got: ' + pollResult.status)
+
+    Examples:
+      | scenario | addressKey | termMonths | bandwidth | testType | assertions |
+```
+
+> **Note:** If `lat`/`lon` are available, add a `"geographicPoint"` block after `"address"`:
+> ```json
+> "geographicPoint": { "spatialReferenceSystem": "WGS84", "x": "#(address.lat)", "y": "#(address.lon)" }
+> ```
+> Add `"lat"` and `"lon"` fields to the address dictionary entry.
+
+---
+
+#### Single Product — EAccess (Ethernet Switched):
+
+Key differences from IpService:
+- `"@type": "EAccess"` — **no `productType` field**
+- `site.serviceConfiguration`: `accessBandwidth` + `"accessMedia": ["<accessMedia>"]`
+- `serviceBandwidth` is at the **requirement level** (outside `site`):
+
+```gherkin
+  @{provider_tag} @quote @{provider_tag}-eaccess
+  Scenario Outline: {Provider} Ethernet Switched - <scenario>
+    * def clientRequestRef = generateRef()
+    * def address = addresses['<addressKey>']
+
+    Given path 'requirement'
+    And request
+      """
+      {
+        "clientRequestReference": "#(clientRequestRef)",
+        "customer": {
+          "customerId": "#(customer.customerId)",
+          "customerName": "#(customer.customerName)"
+        },
+        "requirements": [{
+          "@type": "EAccess",
+          "clientRequirementReference": "<scenario>",
+          "processingPriority": "MEDIUM",
+          "contractTermMonths": <termMonths>,
+          "site": {
+            "clientSiteReference": "<scenario>-site",
+            "location": {
+              "address": {
+                "@type": "FieldedAddress",
+                "streetNr": "#(address.streetNr)",
+                "streetName": "#(address.streetName)",
+                "streetType": "#(address.streetType)",
+                "postcode": "#(address.postcode)",
+                "stateOrProvince": "#(address.stateOrProvince)",
+                "countryIso3": "#(address.countryIso3)",
+                "city": "#(address.city)"
+              }
+            },
+            "serviceConfiguration": {
+              "accessBandwidth": { "unit": "MBPS", "value": <bandwidth> },
+              "accessMedia": ["<accessMedia>"]
+            }
+          },
+          "serviceBandwidth": { "unit": "MBPS", "value": <bandwidth> }
+        }]
+      }
+      """
+    When method POST
+    Then status 200
+    And match response.systemRequestId == '#notnull'
+    And match response.requirements[0].systemRequirementId == '#notnull'
+
+    * def engagementId = response.requirements[0].systemRequirementId
+    * karate.log('{Provider} EAccess engagement ID:', engagementId)
+    * def resultConfig = { engagementId: '#(engagementId)', queryUrl: '#(queryServiceUrl)', timeoutSeconds: '#(resultTimeoutSeconds)', testType: '<testType>', assertions: '<assertions>', providerFilter: '{Provider Filter String}' }
+    * def pollResult = call read('classpath:helpers/wait_for_uap_result.js') resultConfig
+    * karate.log('{Provider} EAccess result status:', pollResult.status, 'source:', pollResult.source)
+    * def isSuccessTest = '<testType>' == 'success'
+    * if (isSuccessTest && pollResult.status != 'success') karate.fail('Expected success but got: ' + pollResult.status)
+
+    Examples:
+      | scenario | addressKey | termMonths | bandwidth | accessMedia | testType | assertions |
+```
+
+---
+
+#### Single Product — ELine (Ethernet Dedicated P2P):
+
+```gherkin
+  @{provider_tag} @quote @{provider_tag}-eline
+  Scenario Outline: {Provider} Ethernet Dedicated - <scenario>
+    * def clientRequestRef = generateRef()
+    * def addressA = addresses['<siteAKey>']
+    * def addressZ = addresses['<siteZKey>']
+
+    Given path 'requirement'
+    And request
+      """
+      {
+        "clientRequestReference": "#(clientRequestRef)",
+        "customer": {
+          "customerId": "#(customer.customerId)",
+          "customerName": "#(customer.customerName)"
+        },
+        "requirements": [{
+          "@type": "ELine",
+          "clientRequirementReference": "<scenario>",
+          "processingPriority": "MEDIUM",
+          "contractTermMonths": <termMonths>,
+          "backhaul": {
+            "backhaulBandwidth": { "unit": "MBPS", "value": <bandwidth> }
+          },
+          "sites": [
+            {
+              "clientSiteReference": "<scenario>-site-a",
+              "location": {
+                "address": {
+                  "@type": "FieldedAddress",
+                  "streetNr": "#(addressA.streetNr)",
+                  "streetName": "#(addressA.streetName)",
+                  "streetType": "#(addressA.streetType)",
+                  "postcode": "#(addressA.postcode)",
+                  "stateOrProvince": "#(addressA.stateOrProvince)",
+                  "countryIso3": "#(addressA.countryIso3)",
+                  "city": "#(addressA.city)"
+                }
+              },
+              "serviceConfiguration": {
+                "accessBandwidth": { "unit": "MBPS", "value": <bandwidth> },
+                "accessMedia": ["<accessMedia>"]
+              }
+            },
+            {
+              "clientSiteReference": "<scenario>-site-z",
+              "location": {
+                "address": {
+                  "@type": "FieldedAddress",
+                  "streetNr": "#(addressZ.streetNr)",
+                  "streetName": "#(addressZ.streetName)",
+                  "streetType": "#(addressZ.streetType)",
+                  "postcode": "#(addressZ.postcode)",
+                  "stateOrProvince": "#(addressZ.stateOrProvince)",
+                  "countryIso3": "#(addressZ.countryIso3)",
+                  "city": "#(addressZ.city)"
+                }
+              },
+              "serviceConfiguration": {
+                "accessBandwidth": { "unit": "MBPS", "value": <bandwidth> },
+                "accessMedia": ["<accessMedia>"]
+              }
+            }
+          ]
+        }]
+      }
+      """
+    When method POST
+    Then status 200
+    And match response.systemRequestId == '#notnull'
+    And match response.requirements[0].systemRequirementId == '#notnull'
+
+    * def engagementId = response.requirements[0].systemRequirementId
+    * karate.log('{Provider} ELine engagement ID:', engagementId)
+    * def resultConfig = { engagementId: '#(engagementId)', queryUrl: '#(queryServiceUrl)', timeoutSeconds: '#(resultTimeoutSeconds)', testType: '<testType>', assertions: '<assertions>', providerFilter: '{Provider Filter String}' }
+    * def pollResult = call read('classpath:helpers/wait_for_uap_result.js') resultConfig
+    * karate.log('{Provider} ELine result status:', pollResult.status, 'source:', pollResult.source)
+    * def isSuccessTest = '<testType>' == 'success'
+    * if (isSuccessTest && pollResult.status != 'success') karate.fail('Expected success but got: ' + pollResult.status)
+
+    Examples:
+      | scenario | siteAKey | siteZKey | termMonths | bandwidth | accessMedia | testType | assertions |
+```
+
+---
+
+#### Single Product — Broadband:
+
+```gherkin
+  @{provider_tag} @quote @{provider_tag}-broadband
+  Scenario Outline: {Provider} Broadband - <scenario>
+    * def clientRequestRef = generateRef()
+
+    Given path 'requirement'
+    And request
+      """
+      {
+        "clientRequestReference": "#(clientRequestRef)",
+        "customer": {
+          "customerId": "#(customer.customerId)",
+          "customerName": "#(customer.customerName)"
+        },
+        "requirements": [{
+          "@type": "Broadband",
+          "productType": "BROADBAND",
+          "clientRequirementReference": "<scenario>",
+          "processingPriority": "MEDIUM",
+          "contractTermMonths": 12,
+          "site": {
+            "clientSiteReference": "<scenario>-site",
+            "location": {
+              "address": {
+                "@type": "FieldedAddress",
+                "streetNr": "<streetNr>",
+                "streetName": "<streetName>",
+                "streetType": "<streetType>",
+                "postcode": "<postcode>",
+                "stateOrProvince": "<state>",
+                "countryIso3": "USA",
+                "city": "<city>"
+              }
+            },
+            "serviceConfiguration": {
+              "accessMedia": ["<accessMedia>"],
+              "serviceBandwidth": { "unit": "MBPS", "value": <downloadBandwidth> },
+              "accessBandwidth": {
+                "downloadBandwidth": { "unit": "MBPS", "value": <downloadBandwidth> },
+                "uploadBandwidth": { "unit": "MBPS", "value": <uploadBandwidth> }
+              }
+            }
+          }
+        }]
+      }
+      """
+    When method POST
+    Then status 200
+    And match response.systemRequestId == '#notnull'
+    And match response.requirements[0].systemRequirementId == '#notnull'
+
+    * def engagementId = response.requirements[0].systemRequirementId
+    * karate.log('{Provider} Broadband engagement ID:', engagementId)
+    * def resultConfig = { engagementId: '#(engagementId)', queryUrl: '#(queryServiceUrl)', timeoutSeconds: '#(resultTimeoutSeconds)', testType: '<testType>', assertions: '<assertions>', providerFilter: '{Provider Filter String}' }
+    * def pollResult = call read('classpath:helpers/wait_for_uap_result.js') resultConfig
+    * karate.log('{Provider} Broadband result status:', pollResult.status, 'source:', pollResult.source)
+    * def isSuccessTest = '<testType>' == 'success'
+    * if (isSuccessTest && pollResult.status != 'success') karate.fail('Expected success but got: ' + pollResult.status)
+
+    Examples:
+      | scenario | streetNr | streetName | streetType | postcode | state | city | accessMedia | downloadBandwidth | uploadBandwidth | testType | assertions |
+```
+
+---
+
+#### Multi-Product — Unified buildRequest template (IpService + EAccess + ELine):
+
+Use this when a provider supports multiple product types (like ESUN). The `buildRequest` function handles all three types from a single Scenario Outline.
+
+```gherkin
+Feature: {Provider Name} quote integration tests
+  End-to-end tests for {Provider Name} solution provider.
+
+  Background:
+    * url restApiUrl
+    * def queryServiceUrl = queryServiceUrl
+    * def customer = testCustomer
+    * def generateRef = function() { return '{provider-prefix}-' + java.lang.System.currentTimeMillis() + '-' + Math.floor(Math.random() * 10000) }
+    * def addresses =
+      """
+      {
+        "{ADDRESS_KEY}": {
+          "streetNr": "{streetNr}",
+          "streetName": "{streetName}",
+          "streetType": "{streetType}",
+          "postcode": "{postcode}",
+          "stateOrProvince": "{stateOrProvince}",
+          "countryIso3": "{countryIso3}",
+          "city": "{city}"
+        }
+      }
+      """
+    * def buildRequest =
+      """
+      function(p) {
+        var toAddr = function(a) {
+          var o = { '@type': 'FieldedAddress', streetNr: a.streetNr, streetName: a.streetName,
+                    postcode: a.postcode, stateOrProvince: a.stateOrProvince, countryIso3: a.countryIso3, city: a.city };
+          if (a.streetType) o.streetType = a.streetType;
+          if (a.locality) o.locality = a.locality;
+          return o;
+        };
+        var toSite = function(ref, addr, bw) {
+          return { clientSiteReference: ref, location: { address: toAddr(addr) },
+                   serviceConfiguration: { accessBandwidth: { unit: 'MBPS', value: bw }, accessMedia: ['FIBRE'] } };
+        };
+        var r = { '@type': p.type, clientRequirementReference: p.scenario,
+                  processingPriority: 'MEDIUM', contractTermMonths: p.termMonths };
+        if (p.type === 'IpService') {
+          r.productType = 'IP_SERVICES';
+          var s = toSite(p.scenario + '-site', p.addressA, p.bandwidth);
+          s.serviceConfiguration.serviceBandwidth = { unit: 'MBPS', value: p.bandwidth };
+          r.site = s;
+        } else if (p.type === 'EAccess') {
+          r.site = toSite(p.scenario + '-site', p.addressA, p.bandwidth);
+          r.serviceBandwidth = { unit: 'MBPS', value: p.bandwidth };
+        } else if (p.type === 'ELine') {
+          r.backhaul = { backhaulBandwidth: { unit: 'MBPS', value: p.bandwidth } };
+          r.sites = [ toSite(p.scenario + '-site-a', p.addressA, p.bandwidth),
+                      toSite(p.scenario + '-site-z', p.addressZ, p.bandwidth) ];
+        }
+        return { clientRequestReference: p.ref, customer: p.customer, requirements: [r] };
+      }
+      """
+
+  # ============================================================================
+  # All Products: DIA (IpService) | Ethernet Switched (EAccess) | Ethernet Dedicated (ELine)
+  # ============================================================================
+
+  @{provider_tag} @quote
+  Scenario Outline: {Provider} - <scenario>
+    * def clientRequestRef = generateRef()
+    * def addressA = addresses['<siteAKey>']
+    * def addressZ = '<siteZKey>' != '' ? addresses['<siteZKey>'] : null
+    * def reqBody = buildRequest({ type: '<reqType>', scenario: '<scenario>', ref: clientRequestRef, customer: customer, addressA: addressA, addressZ: addressZ, bandwidth: <bandwidth>, termMonths: <termMonths> })
+
+    Given path 'requirement'
+    And request reqBody
+    When method POST
+    Then status 200
+    And match response.systemRequestId == '#notnull'
+    And match response.requirements[0].systemRequirementId == '#notnull'
+
+    * def engagementId = response.requirements[0].systemRequirementId
+    * karate.log('{Provider} engagement ID:', engagementId)
+    * def resultConfig = { engagementId: '#(engagementId)', queryUrl: '#(queryServiceUrl)', timeoutSeconds: '#(resultTimeoutSeconds)', testType: '<testType>', assertions: '<assertions>', providerFilter: '{Provider Filter String}' }
+    * def pollResult = call read('classpath:helpers/wait_for_uap_result.js') resultConfig
+    * karate.log('{Provider} result status:', pollResult.status, 'source:', pollResult.source)
+    * def isSuccessTest = '<testType>' == 'success'
+    * if (isSuccessTest && pollResult.status != 'success') karate.fail('Expected success but got: ' + pollResult.status)
+
+    Examples:
+      | scenario | reqType | siteAKey | siteZKey | termMonths | bandwidth | testType | assertions |
+```
+
+> For ELine rows: set `siteZKey` to the Z-side address key. For single-site rows (IpService/EAccess): leave `siteZKey` as empty string `''`.
+
+---
+
+### UAP Step 8: Add Another Scenario
+
+**Question** (header: "Add More")
+- Question: "Would you like to add another scenario to this provider?"
+- Options:
+  - "Yes" (description: "Add another scenario")
+  - "No" (description: "Proceed to summary")
+
+If "Yes": Return to UAP Step 1.
+
+---
+
+### UAP Step 9: Summary
+
+Provide a summary of all scenarios added:
+
+- **File**: `src/test/resources/features/quote/{Provider}/{Provider}_Quote.feature` (NEW if created)
+- **Mode**: UAP
+- For each scenario: provider, product type, address, bandwidth, term, testType, assertions
+
+---
+
+### UAP Step 10: Run Tests Prompt
+
+**Question** (header: "Run Tests")
+- Question: "Would you like to run these tests now?"
+- Options:
+  - "Yes" (description: "Run from repo root with the appropriate Gradle command")
+  - "No" (description: "Skip test execution")
+
+**Run commands (from repo root):**
+
+```bash
+# Stage (default)
+./gradlew test '-Dkarate.options=--tags @{provider_tag} --tags ~@bug --tags ~@uat --tags ~@prod' -Dkarate.env=stage
+
+# UAT
+./gradlew test '-Dkarate.options=--tags @{provider_tag} --tags ~@bug --tags ~@stage --tags ~@prod' -Dkarate.env=uat
+
+# Prod
+./gradlew test '-Dkarate.options=--tags @{provider_tag} --tags ~@bug --tags ~@stage --tags ~@uat' -Dkarate.env=prod
+```
+
+---
+
+### UAP Important Notes
+
+- Always use the Read tool before editing any feature file
+- Preserve existing scenarios and address dictionary entries when adding new ones
+- `@type` and `productType` must match exactly: IpService uses `productType: IP_SERVICES`; EAccess/ELine have no `productType`; Broadband uses `productType: BROADBAND`
+- `serviceBandwidth` placement differs: inside `site.serviceConfiguration` for IpService, at requirement level for EAccess, not present for ELine (uses `backhaulBandwidth` instead)
+- `providerFilter` must be the exact string the query service returns — check existing `resultConfig` lines in the feature file
+- Scenario names follow the pattern: `{Provider}-{ProductAbbrev}-{City}-{Bandwidth}M-{Term}mo` (e.g., `Lumen-DIA-SanFrancisco-100M-12mo`)
+- Leave `streetType` out of the address object entirely when not provided (don't set it to empty string)
+- Run from repo root — there is no `tests/integration/karate/` subdirectory in UAP

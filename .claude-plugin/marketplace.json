@@ -11,7 +11,7 @@
     {
       "name": "qa-addquote",
       "source": "./plugins/qa-addquote",
-      "description": "Add new quote test scenarios to the Karate integration test suite (RP1 and RP2)"
+      "description": "Add new quote test scenarios to the Karate integration test suite (RP2, RP1, and UAP)"
     },
     {
       "name": "qa-apimapadd",
