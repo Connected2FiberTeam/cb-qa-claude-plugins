@@ -15,7 +15,7 @@ QA automation Claude Code plugins for the Connectbase ACE team. Works across Rem
 | `qa-addquote` | Add new quote test scenarios to the Karate integration test suite — auto-detects RP1 vs RP2 |
 | `qa-apimapadd` | Generate Karate API mapping feature files from PSAM CSV files |
 | `qa-coverage-analysis` | Analyze Jira ticket test coverage — requirements, code changes, Zephyr test cases, and Karate gaps |
-| `qa-zephyr-review` | Review Zephyr Scale test cases for completeness, clarity, and platform standards |
+| `qa-zephyr-review` | Review Zephyr Scale test cases for completeness, clarity, and platform standards — supports RP1, RP2, LMX, and UAP |
 
 ## Install individual plugins
 
@@ -54,6 +54,10 @@ Skills in this marketplace auto-detect which repo they're running in by scanning
 - `rp1_base_template.json` → RP1 mode (RemotePricingAPI)
 
 This means a single plugin installation works correctly in both repos without any configuration.
+
+## Shared Testing Context
+
+`context/qa-testing-context.md` contains shared QA reference data (provider lists, field options, platform standards) used by `qa-coverage-analysis` and `qa-zephyr-review`. These skills fetch it automatically from GitHub at runtime — no local setup required.
 
 ## Canonical Source
 
