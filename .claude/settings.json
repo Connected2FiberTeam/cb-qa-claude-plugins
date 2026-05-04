@@ -5,6 +5,7 @@
       "Bash(open *)",
       "Bash(python3 *)",
       "Bash(curl *)",
+      "Bash(TOKEN=*)",
       "Bash(echo *)",
       "Bash(file *)",
       "Bash(grep *)",
