@@ -1,6 +1,6 @@
 # cb-qa-claude-plugins
 
-QA automation Claude Code plugins for the Connectbase ACE team. Works across RemotePricing2 (RP2) and RemotePricingAPI (RP1).
+QA automation Claude Code plugins for the Connectbase ACE team. Works across RemotePricing2 (RP2), RemotePricingAPI (RP1), and UAP.
 
 ## Install this marketplace
 
@@ -16,6 +16,9 @@ QA automation Claude Code plugins for the Connectbase ACE team. Works across Rem
 | `qa-apimapadd` | Generate Karate API mapping feature files from PSAM CSV files |
 | `qa-coverage-analysis` | Analyze Jira ticket test coverage — requirements, code changes, Zephyr test cases, and Karate gaps |
 | `qa-zephyr-review` | Review Zephyr Scale test cases for completeness, clarity, and platform standards — supports RP1, RP2, LMX, and UAP |
+| `ace-runquote` | Run a live one-off quote against any ACE provider (RP2, RP1, or UAP) and return the full raw response |
+| `ace-datavalidate` | Validate addresses and quote configurations by running live quote requests across all combinations |
+| `ace-datadiscovery` | Search historical pricing databases (MongoDB for RP2/RP1, PostgreSQL for UAP) to find valid test addresses |
 
 ## Install individual plugins
 
@@ -24,6 +27,9 @@ QA automation Claude Code plugins for the Connectbase ACE team. Works across Rem
 /plugin install qa-apimapadd@qa-tools
 /plugin install qa-coverage-analysis@qa-tools
 /plugin install qa-zephyr-review@qa-tools
+/plugin install ace-runquote@qa-tools
+/plugin install ace-datavalidate@qa-tools
+/plugin install ace-datadiscovery@qa-tools
 ```
 
 ## Prerequisites
@@ -47,13 +53,21 @@ QA automation Claude Code plugins for the Connectbase ACE team. Works across Rem
 ### qa-zephyr-review
 - `ZEPHYR_SCALE_TOKEN` set in `~/.zshrc` — optional (XML export works without it)
 
+### ace-runquote / ace-datavalidate
+No additional prerequisites beyond VPN — uses the existing Gradle/Karate test runner in the target repo.
+
+### ace-datadiscovery
+- `mongosh` (`brew install mongosh`) + the MongoDB env vars above — for RP2/RP1 database searches
+- `database-operations` plugin or `psql` — for UAP PostgreSQL searches
+
 ## Repo Awareness
 
 Skills in this marketplace auto-detect which repo they're running in by scanning for marker files:
 - `rp2_base_template.json` → RP2 mode (RemotePricing2)
 - `rp1_base_template.json` → RP1 mode (RemotePricingAPI)
+- `wait_for_uap_result.js` → UAP mode
 
-This means a single plugin installation works correctly in both repos without any configuration.
+This means a single plugin installation works correctly in all repos without any configuration.
 
 ## Shared Testing Context
 
