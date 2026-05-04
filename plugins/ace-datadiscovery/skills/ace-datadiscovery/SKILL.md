@@ -195,9 +195,61 @@ If the DB tool supports multi-collection queries, use a lookup approach to find 
 
 ---
 
-### RP1 — Note
+### RP1 — MongoDB (`rp1_request_response`)
 
-RP1 does not have a separate MongoDB collection for pricing results. RP1 responses are stored in `da_request_response.rp1_response` or in Elasticsearch. Ask the user if they want to search `da_request_response` for RP1 results, or switch to RP2 mode.
+RP1 results are stored in MongoDB collection `rp1_request_response` (aliased as `ApiExchangeLogMongo`). Each document represents one supplier API call made by RP1.
+
+**Known fields per document:**
+- `request_id` — RP1 requestId (matches the POST response `requestId`)
+- `status` — HTTP status code from the supplier API (200, 201, 400, 500, etc.)
+- `final_response` — raw supplier API response body
+- `error` — exception message if the call threw; null/empty string on success
+
+**"Has pricing" definition:** `status >= 200 && status < 300` AND `error` is null or empty string.
+
+#### Step 3a — Probe schema (run first)
+
+```javascript
+db.getCollection('rp1_request_response').findOne({}, { _id: 0 })
+```
+
+Note all top-level field names — adapt subsequent queries if additional fields exist (e.g., `provider_name`, `supplier`).
+
+#### Step 3b — Resolve provider → provider_id (same as RP2)
+
+```javascript
+db.getCollection('remote_price_supplier').findOne(
+  { supplier: { $regex: '<PROVIDER>', $options: 'i' } },
+  { _id: 0, supplier: 1, provider_id: 1, entity_id: 1 }
+)
+```
+
+#### Step 3c — Find matching config in original_request (same as RP2)
+
+Use the same query as RP2 Step 3b against `original_request`. This gives candidate `requestId` values.
+
+#### Step 3d — Check rp1_request_response for valid result
+
+For each `requestId` from Step 3c, find the matching RP1 document with a successful supplier API response:
+
+```javascript
+db.getCollection('rp1_request_response').findOne(
+  {
+    request_id: '<REQUEST_ID>',
+    status: { $gte: 200, $lt: 300 },
+    $or: [
+      { error: null },
+      { error: '' },
+      { error: { $exists: false } }
+    ]
+  },
+  { _id: 0, request_id: 1, status: 1, final_response: 1 }
+)
+```
+
+Stop at the first `requestId` with a non-null result. The address is in `original_request` for that `requestId`; the raw pricing data is in `rp1_request_response.final_response`.
+
+**Note:** `final_response` is the raw supplier API response (e.g., AT&T qualification/pricing payload), not RP1-formatted data. Present key fields from it as-is — MRC/NRC extraction depends on the supplier's response schema.
 
 ---
 
@@ -348,10 +400,11 @@ If the user selects "Yes", hand off to `qa-addquote` with:
 |---------|-------------|
 | No documents in `original_request` | Provider name mismatch — try regex or partial match |
 | `request_response` has no valid services | Provider had no coverage at tested addresses historically |
+| `rp1_request_response` has no 2xx docs | Provider returned no valid supplier API response for those requestIds |
+| `rp1_request_response.final_response` varies | Raw supplier payload — field names differ per provider; inspect one doc first |
 | `remote_price_supplier` returns null | Provider not registered in this environment's DB |
 | PostgreSQL connection refused | VPN not connected or wrong host for this environment |
 | UAP query service 404 on engagement ID | Engagement too old or purged from query service |
-| RP1 mode selected | No direct collection — suggest searching `da_request_response` or switching to RP2 |
 
 ---
 
