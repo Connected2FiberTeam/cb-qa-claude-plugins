@@ -230,3 +230,92 @@ RP1 Karate tests POST to `/api/v2/internal/remotePrice` and poll MongoDB `rp1_re
 
 - Quote feature files: `tests/integration/karate/src/test/resources/features/quote/`
 - Helpers: `tests/integration/karate/src/test/resources/helpers/`
+
+---
+
+## UAP-Specific Reference
+
+### UAP Async Architecture
+
+UAP is **async** — a POST to `/requirement` returns a `systemRequirementId` (engagement ID) immediately. Results are retrieved by polling the query service or, on stage with EventHub configured, via real-time push.
+
+| Step | Details |
+|------|---------|
+| POST `/requirement` | Returns `requirements[0].systemRequirementId` — the engagement ID |
+| Poll `GET /engagement/{id}` | Query service returns engagement result when completed |
+| EventHub (stage only) | Real-time result push when `EVENTHUB_CONNECTION_STRING` env var is set |
+
+### UAP Environment URLs
+
+| Environment | REST API | Query Service |
+|-------------|----------|---------------|
+| Stage | `https://uap-rest-api.stage.apps.connectbase.dev` | `https://uap-query.stage.apps.connectbase.dev` |
+| UAT | `https://uap-rest-api.uat.apps.connectbase.dev` | `https://uap-query.uat.apps.connectbase.dev` |
+| Prod | `https://uap-rest-api.apps.connectbase.dev` | `https://uap-query.apps.connectbase.dev` |
+
+### UAP Karate Test Paths
+
+- Quote feature files: `src/test/resources/features/quote/<Provider>/`
+- Helpers: `src/test/resources/helpers/`
+- Config: `src/test/resources/karate-config.js`
+
+### UAP Request `@type` Discriminator
+
+| `@type` | Product | Key fields |
+|---------|---------|-----------|
+| `IpService` | DIA / Dedicated Internet | `productType: "IP_SERVICES"`, single `site` with `serviceBandwidth` inside serviceConfiguration |
+| `EAccess` | Ethernet Switched | No `productType`, single `site`, `serviceBandwidth` at requirement level |
+| `ELine` | Ethernet Dedicated (P2P) | No `productType`, `backhaul.backhaulBandwidth`, `sites` array (A + Z) |
+| `Broadband` | Broadband | `productType: "BROADBAND"`, single `site`, asymmetric `accessBandwidth` (download/upload split) |
+
+### UAP Address Format
+
+UAP uses **fielded addresses** — not a single address string. Key fields:
+
+| Field | Notes |
+|-------|-------|
+| `streetNr` | Street number only (e.g., `"50"`) |
+| `streetName` | Street name only — no type suffix (e.g., `"Fremont"`, not `"Fremont St"`) |
+| `streetType` | Optional suffix — e.g., `"St"`, `"Ave"`, `"Rd"` |
+| `postcode` | Postal/ZIP code |
+| `stateOrProvince` | 2-letter abbreviation for US/CA; full region name for international |
+| `countryIso3` | 3-letter ISO code (e.g., `"USA"`, `"GBR"`, `"CHN"`, `"AUS"`) |
+| `city` | City name |
+
+For geocoded providers (e.g., Lumen), include a `geographicPoint` inside `location`:
+```json
+"geographicPoint": { "spatialReferenceSystem": "WGS84", "x": "<lat>", "y": "<lon>" }
+```
+
+### UAP Assertion Syntax (for `resultConfig.assertions`)
+
+Semicolon-separated:
+
+| Syntax | Meaning |
+|--------|---------|
+| `supplierProductId=LUMEN_DIA` | Exact match on supplier product ID |
+| `mrc=433.5` | Exact MRC amount |
+| `mrc!=0` / `nrc!=0` | Non-zero cost |
+| `currencyIso3=USD` | Currency code |
+| `accessMedium=FIBRE` | Access medium |
+| `chipset=FTTP` | Chipset value |
+
+### UAP Tag Exclusion Requirements
+
+Environment exclusion tags are **always required** when running UAP Karate tests:
+
+| Environment | Required exclusion tags |
+|-------------|------------------------|
+| Stage | `--tags ~@bug --tags ~@uat --tags ~@prod` |
+| UAT | `--tags ~@bug --tags ~@stage --tags ~@prod` |
+| Prod | `--tags ~@bug --tags ~@stage --tags ~@uat` |
+
+### UAP `providerFilter` Discovery
+
+The `providerFilter` in `resultConfig` is the exact SP name string — it varies by provider and is not the same as the Karate tag. Find it by reading the `resultConfig` line in the provider's feature file:
+
+```
+src/test/resources/features/quote/<Provider>/<Provider>_Quote.feature
+```
+
+Examples: `'Lumen Quote v4'`, `'ESUN LMP Inquiry'`, `'Windstream Wholesale Broadband Quoting'`

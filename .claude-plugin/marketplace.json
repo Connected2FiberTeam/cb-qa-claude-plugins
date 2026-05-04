@@ -4,7 +4,7 @@
     "name": "Don Dohr"
   },
   "metadata": {
-    "description": "QA automation skills for Connectbase ACE team — Karate test generation, coverage analysis, and Zephyr Scale review. Works across RemotePricing2 (RP2) and RemotePricingAPI (RP1).",
+    "description": "QA automation skills for Connectbase ACE team — Karate test generation, coverage analysis, and Zephyr Scale review. Works across RemotePricing2 (RP2), RemotePricingAPI (RP1), and UAP.",
     "pluginRoot": "./plugins"
   },
   "plugins": [
@@ -27,6 +27,11 @@
       "name": "qa-zephyr-review",
       "source": "./plugins/qa-zephyr-review",
       "description": "Review Zephyr Scale test cases for completeness, clarity, and RP2/RP1 standards"
+    },
+    {
+      "name": "ace-runquote",
+      "source": "./plugins/ace-runquote",
+      "description": "Run a live one-off quote against any ACE platform provider (RP2, RP1, or UAP) and return the raw response"
     }
   ]
 }

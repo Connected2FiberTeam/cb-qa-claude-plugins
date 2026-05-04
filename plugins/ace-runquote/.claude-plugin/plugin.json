@@ -1,0 +1,7 @@
+{
+  "name": "ace-runquote",
+  "description": "Run a live one-off quote against any ACE platform provider (RP2, RP1, or UAP) and return the full raw response. Auto-detects the repo and adapts accordingly.",
+  "version": "1.0.0",
+  "author": { "name": "Don Dohr" },
+  "keywords": ["karate", "quote", "rp2", "rp1", "uap", "integration-test", "adhoc"]
+}
