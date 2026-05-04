@@ -1,0 +1,7 @@
+{
+  "name": "ace-datadiscovery",
+  "description": "Search historical pricing databases (MongoDB for RP2/RP1, PostgreSQL for UAP) to find addresses and configurations that returned valid pricing. Presents the first valid result and offers to add it as a permanent test scenario.",
+  "version": "1.0.0",
+  "author": { "name": "Don Dohr" },
+  "keywords": ["karate", "quote", "discovery", "mongodb", "postgresql", "address", "rp2", "rp1", "uap", "integration-test"]
+}

@@ -4,7 +4,7 @@
     "name": "Don Dohr"
   },
   "metadata": {
-    "description": "QA automation skills for Connectbase ACE team — Karate test generation, coverage analysis, and Zephyr Scale review. Works across RemotePricing2 (RP2), RemotePricingAPI (RP1), and UAP.",
+    "description": "QA automation skills for Connectbase ACE team — Karate test generation, coverage analysis, data validation, data discovery, and Zephyr Scale review. Works across RemotePricing2 (RP2), RemotePricingAPI (RP1), and UAP.",
     "pluginRoot": "./plugins"
   },
   "plugins": [
@@ -37,6 +37,11 @@
       "name": "ace-datavalidate",
       "source": "./plugins/ace-datavalidate",
       "description": "Validate addresses and quote configurations by batching live quote requests (max 10 per run) and stopping as soon as a valid result is found"
+    },
+    {
+      "name": "ace-datadiscovery",
+      "source": "./plugins/ace-datadiscovery",
+      "description": "Search historical pricing databases (MongoDB for RP2/RP1, PostgreSQL for UAP) to find addresses and configurations that returned valid pricing, then offer to add as a permanent test scenario"
     }
   ]
 }
