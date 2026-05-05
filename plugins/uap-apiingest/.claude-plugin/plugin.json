@@ -1,0 +1,7 @@
+{
+  "name": "uap-apiingest",
+  "description": "Ingest a UAP provider API from Confluence BA spec and test data pages. Validates both pages are for the same provider, then generates the catalogue feature file (products, terms, speeds, media, countries, rate limits) and quote feature file (success + no-coverage scenarios).",
+  "version": "1.0.0",
+  "author": { "name": "Don Dohr" },
+  "keywords": ["karate", "uap", "catalogue", "quote", "confluence", "integration-test", "ingest"]
+}
