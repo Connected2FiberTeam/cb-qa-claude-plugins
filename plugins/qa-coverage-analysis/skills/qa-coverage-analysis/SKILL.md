@@ -1,7 +1,7 @@
 ---
 name: qa-coverage-analysis
 description: Analyze Jira ticket test coverage — requirements, code changes, Zephyr Scale test cases, and Karate integration gaps. Works in both RemotePricing2 (RP2) and RemotePricingAPI (RP1). Use with a Jira ticket key e.g. /qa-coverage-analysis ACE-2908
-allowed-tools: Bash(ls:*), Bash(git:*), Bash(python3:*), Bash(python3 <<:*), Bash(curl:*), Bash(echo:*), Bash(file:*), Bash(grep:*), Bash(find:*), Read, Grep, Glob, WebFetch, mcp__claude_ai_Atlassian__getJiraIssue, mcp__claude_ai_Atlassian__search, mcp__claude_ai_Atlassian__fetch, mcp__plugin_atlassian_atlassian__getJiraIssue, mcp__plugin_atlassian_atlassian__search, mcp__plugin_atlassian_atlassian__fetch, mcp__atlassian__getJiraIssue, mcp__atlassian__search
+allowed-tools: Bash(ls:*), Bash(git:*), Bash(python3:*), Bash(python3 <<:*), Bash(curl:*), Bash(echo:*), Bash(file:*), Bash(grep:*), Bash(find:*), Read, Grep, Glob, WebFetch, mcp__claude_ai_Atlassian__getJiraIssue, mcp__claude_ai_Atlassian__search, mcp__claude_ai_Atlassian__fetch, mcp__plugin_atlassian_atlassian__getJiraIssue, mcp__plugin_atlassian_atlassian__search, mcp__plugin_atlassian_atlassian__fetch, mcp__atlassian__getJiraIssue, mcp__atlassian__search, mcp__atlassian__fetch
 ---
 
 # QA Coverage Analysis
