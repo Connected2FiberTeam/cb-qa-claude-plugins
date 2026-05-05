@@ -42,6 +42,11 @@
       "name": "ace-datadiscovery",
       "source": "./plugins/ace-datadiscovery",
       "description": "Search historical pricing databases (MongoDB for RP2/RP1, PostgreSQL for UAP) to find addresses and configurations that returned valid pricing, then offer to add as a permanent test scenario"
+    },
+    {
+      "name": "uap-apiingest",
+      "source": "./plugins/uap-apiingest",
+      "description": "Ingest a new UAP provider from two Confluence pages (BA spec + test data) and generate catalogue and quote Karate feature files"
     }
   ]
 }
