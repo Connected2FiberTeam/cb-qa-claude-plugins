@@ -19,7 +19,6 @@ QA automation Claude Code plugins for the Connectbase ACE team. Works across Rem
 | `ace-runquote` | Run a live one-off quote against any ACE provider (RP2, RP1, or UAP) and return the full raw response |
 | `ace-datavalidate` | Validate addresses and quote configurations by running live quote requests across all combinations |
 | `ace-datadiscovery` | Search historical pricing databases (MongoDB for RP2/RP1, PostgreSQL for UAP) to find valid test addresses |
-| `uap-apiingest` | Ingest a new UAP provider from two Confluence pages (BA spec + test data) and generate catalogue and quote Karate feature files |
 
 ## Install individual plugins
 
@@ -31,7 +30,6 @@ QA automation Claude Code plugins for the Connectbase ACE team. Works across Rem
 /plugin install ace-runquote@qa-tools
 /plugin install ace-datavalidate@qa-tools
 /plugin install ace-datadiscovery@qa-tools
-/plugin install uap-apiingest@qa-tools
 ```
 
 ## Prerequisites
@@ -62,10 +60,6 @@ No additional prerequisites beyond VPN — uses the existing Gradle/Karate test 
 - `mongosh` (`brew install mongosh`) + the MongoDB env vars above — for RP2/RP1 database searches
 - `database-operations` plugin or `psql` — for UAP PostgreSQL searches
 
-### uap-apiingest
-- Atlassian MCP connected — for reading Confluence BA spec and test data pages
-- Run from a UAP repo root (detects `src/test/resources/features/provider/` for file placement)
-- Usage: `/uap-apiingest <ba-spec-confluence-url> <test-data-confluence-url>`
 
 ## Repo Awareness
 
