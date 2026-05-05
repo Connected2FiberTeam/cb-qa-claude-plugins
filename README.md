@@ -49,6 +49,17 @@ QA automation Claude Code plugins for the Connectbase ACE team. Works across Rem
 ### qa-coverage-analysis
 - `ZEPHYR_SCALE_TOKEN` set in `~/.zshrc` — for Zephyr Scale test case lookup
 - Atlassian MCP connected — for Jira ticket fetch
+- The following added to `~/.claude/settings.json` to suppress permission prompts when running from any repo:
+  ```json
+  "permissions": {
+    "allow": [
+      "Bash(curl *)",
+      "mcp__claude_ai_Atlassian__fetch",
+      "mcp__plugin_atlassian_atlassian__fetch",
+      "mcp__atlassian__fetch"
+    ]
+  }
+  ```
 
 ### qa-zephyr-review
 - `ZEPHYR_SCALE_TOKEN` set in `~/.zshrc` — optional (XML export works without it)
